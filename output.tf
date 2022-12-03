@@ -1,15 +1,15 @@
 output "name" {
-  value       = google_container_cluster.app_cluster.name
+  value       = google_container_cluster.cluster.name
   description = "The Kubernetes cluster name."
 }
 
 output "endpoint" {
-  value       = google_container_cluster.app_cluster.endpoint
+  value       = google_container_cluster.cluster.endpoint
   description = "The Kubernetes endpoint."
 }
 
 output "master_auth" {
-  value       = google_container_cluster.app_cluster.master_auth
+  value       = google_container_cluster.cluster.master_auth
   description = "The Kubernetes master_auth."
 }
 

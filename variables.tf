@@ -1,83 +1,64 @@
-variable "project_id" {
-  type        = string
-  description = "The project ID to host the network in"
-}
+# Each resource variable has prefix which indicate the resource it's related to.
+# For example cluster{{ some variable}}, means variable for google_container_cluster
 
+# Variables related to cluster it-self
+# google_container_cluster.name
 variable "cluster_name" {
-  type        = string
-  description = "The name of the cluster"
+  type = string
 }
-
-variable "region" {
-  type        = string
-  description = "The region to use"
+# google_container_cluster.location
+variable "cluster_location" {
+  type = string
 }
-
-variable "node_zones" {
-  type        = list(string)
-  description = "The zones where worker nodes are located"
+# google_container_cluster.initial_node_count
+variable "cluster_initial_node_count" {
+  type = string
 }
-
-variable "node_pool" {
-  type        = object({
-    autoscaling = object({
-      max_node_count = number
-      min_node_count = number
-    })
-    node_config = object({
-      preemptible = bool
-      machine_type = string
-      image_type   = string
-      disk_size_gb = number
-    })
+# google_container_cluster.ip_allocation_policy
+variable "cluster_ip_allocation_policy" {
+  type = object({
+    cluster_ipv4_cidr_block  = string
+    services_ipv4_cidr_block = string
   })
-  default = {
-    autoscaling = {
-      max_node_count = 2
-      min_node_count = 1
-    }
-    node_config = {
-      preemptible = true
-      machine_type = "e2-medium"
-      image_type   = "ubuntu_containerd"
-      disk_size_gb = 10
-    }
-  }
-  description = "Node pool configuration"
 }
-
-variable "network" {
-  type        = string
-  description = "The name of the app VPC"
+# google_container_cluster.network
+variable "cluster_network" {
+  type = string
 }
-
-variable "subnetwork" {
-  type        = string
-  description = "The name of the app subnet"
+# google_container_cluster.subnetwork
+variable "cluster_subnetwork" {
+  type = string
 }
-
-variable "service_account" {
-  type        = string
-  description = "The service account to use"
-}
-
-variable "cluster_ipv4_cidr_block" {
-  type        = string
-  description = "The CIDR block to use for pod IPs"
-}
-
-variable "services_ipv4_cidr_block" {
-  type        = string
-  description = "The CIDR block to use for the service IPs"
-}
-
-variable "authorized_ipv4_cidr_block" {
-  type        = string
+# google_container_cluster.master_authorized_networks_config
+variable "cluster_master_authorized_networks_config" {
   description = "The CIDR block where HTTPS access is allowed from"
-  default     = null
+  type = object({
+    cidr_blocks = list(object({
+      cidr_block   = string
+      display_name = string
+    }))
+  })
+  default = null
 }
-
-variable "master_ipv4_cidr_block" {
-  type        = string
-  description = "The /28 CIDR block to use for the master IPs"
+# google_container_cluster.private_cluster_config
+variable "cluster_private_cluster_config" {
+  type = object({
+    enable_private_endpoint = bool
+    enable_private_nodes    = bool
+    master_ipv4_cidr_block  = string
+  })
+}
+# google_container_cluster.node_config
+variable "cluster_node_config" {
+  type = object({
+    disk_size_gb = string
+    disk_type    = string
+    machine_type = string
+    spot         = bool
+  })
+}
+# google_container_cluster.remove_default_node_pool
+variable "cluster_remove_default_node_pool" {
+  type    = bool
+  default = false
 }
