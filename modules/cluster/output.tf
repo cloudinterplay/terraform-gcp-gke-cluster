@@ -14,6 +14,6 @@ output "master_auth" {
 }
 
 output "service_account" {
-  value       = google_service_account.default.email
+  value       = google_service_account.cluster_service_account.email
   description = "The Service account associated with Kubernetes cluster."
 }
