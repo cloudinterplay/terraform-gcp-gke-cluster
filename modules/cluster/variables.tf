@@ -71,6 +71,11 @@ variable "cluster_autoscaling" {
   description = "(Optional) Per-cluster configuration of Node Auto-Provisioning with Cluster Autoscaler to automatically adjust the size of the cluster and create/delete node pools based on the current needs of the cluster's workload."
   type = object({
     enabled       = bool
+    resource_limits = optional(list(object({
+      resource_type = string
+      minimum = number
+      maximum = number
+    })),[])
   })
   default = null
 }
@@ -182,16 +187,6 @@ variable "workload_metadata_config" {
 variable "node_pools_labels" {
   type        = map(map(string))
   description = "Map of maps containing node labels by node-pool name"
-
-  # Default is being set in variables_defaults.tf
-  default = {
-    all               = {}
-    default-node-pool = {}
-  }
-}
-variable "node_pools_metadata" {
-  type        = map(map(string))
-  description = "Map of maps containing node metadata by node-pool name"
 
   # Default is being set in variables_defaults.tf
   default = {

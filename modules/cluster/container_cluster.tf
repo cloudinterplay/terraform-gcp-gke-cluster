@@ -50,15 +50,22 @@ resource "google_container_cluster" "cluster" {
   cluster_ipv4_cidr = var.cluster_ipv4_cidr
 
   dynamic cluster_autoscaling {
-    for_each = var.cluster_autoscaling != null ? [var.cluster_autoscaling] : []
+    for_each = lookup(var.cluster_autoscaling,"enabled", false) ? [var.cluster_autoscaling] : []
     content {
       enabled  = cluster_autoscaling.value.enabled
+      dynamic resource_limits {
+        for_each = lookup(var.cluster_autoscaling,"resource_limits",[])
+        content {
+          resource_type = resource_limits.value.resource_type
+          minimum       = resource_limits.value.minimum
+          maximum       = resource_limits.value.maximum
+        }
+      }
     }
   }
 
   default_max_pods_per_node = var.default_max_pods_per_node
   enable_shielded_nodes     = var.enable_shielded_nodes
-  initial_node_count        = var.initial_node_count
 
   dynamic ip_allocation_policy {
     for_each = var.ip_allocation_policy != null ? [var.ip_allocation_policy] : []
@@ -154,7 +161,7 @@ resource "google_container_cluster" "cluster" {
         }
       }
 
-      metadata = local.node_pools_metadata["all"]
+      # metadata = local.node_pools_metadata["all"]
 
       shielded_instance_config {
         enable_secure_boot          = lookup(var.node_pools[0], "enable_secure_boot", false)
