@@ -50,7 +50,7 @@ resource "google_container_cluster" "cluster" {
   cluster_ipv4_cidr = var.cluster_ipv4_cidr
 
   dynamic cluster_autoscaling {
-    for_each = lookup(var.cluster_autoscaling,"enabled", false) ? [var.cluster_autoscaling] : []
+    for_each = var.cluster_autoscaling != null ? [var.cluster_autoscaling] : []
     content {
       enabled  = cluster_autoscaling.value.enabled
       dynamic resource_limits {
@@ -127,6 +127,17 @@ resource "google_container_cluster" "cluster" {
     name               = "default-pool"
     initial_node_count = var.initial_node_count
 
+    dynamic "autoscaling" {
+      for_each = [lookup(var.node_pools[0], "autoscaling", [])]
+      content {
+        min_node_count       = autoscaling.value.min_count
+        max_node_count       = autoscaling.value.max_count
+        location_policy      = autoscaling.value.location_policy
+        total_min_node_count = autoscaling.value.total_min_count
+        total_max_node_count = autoscaling.value.total_max_count
+      }
+    }
+
     node_config {
       image_type       = lookup(var.node_pools[0], "image_type", "COS_CONTAINERD")
       machine_type     = lookup(var.node_pools[0], "machine_type", "e2-micro")
@@ -160,8 +171,6 @@ resource "google_container_cluster" "cluster" {
           mode = each.value.mode
         }
       }
-
-      # metadata = local.node_pools_metadata["all"]
 
       shielded_instance_config {
         enable_secure_boot          = lookup(var.node_pools[0], "enable_secure_boot", false)

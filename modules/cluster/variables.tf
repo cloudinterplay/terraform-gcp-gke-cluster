@@ -166,17 +166,6 @@ variable "remove_default_node_pool" {
   type    = bool
   default = false
 }
-variable "node_pools" {
-  type        = list(map(any))
-  description = "List of maps containing node pools"
-
-  default = [
-    {
-      name = "default-node-pool",
-      machine_type = "e2-micro"
-    },
-  ]
-}
 variable "workload_metadata_config" {
   description = "(Optional) Metadata configuration to expose to workloads on the node pool."
   type        = object({
@@ -223,4 +212,26 @@ variable "node_pools_oauth_scopes" {
     all               = ["https://www.googleapis.com/auth/cloud-platform"]
     default-node-pool = []
   }
+}
+variable "node_pools" {
+  description = "List of maps containing node pools"
+  type        = list(object({
+    name = string
+    machine_type = string
+    disk_size_gb = optional(string,"10")
+    autoscaling = optional(object({
+      min_count = optional(number,1)
+      max_count = optional(number,2)
+      location_policy = optional(string,"BALANCED")
+      total_min_count = optional(string,null)
+      total_max_count = optional(string,null)
+    }))
+  }))
+
+  default = [
+    {
+      name = "default-node-pool",
+      machine_type = "e2-micro"
+    },
+  ]
 }
