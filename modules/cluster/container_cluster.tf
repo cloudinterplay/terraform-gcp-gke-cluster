@@ -3,16 +3,16 @@ resource "google_container_cluster" "cluster" {
   description = var.description
   project     = var.project
 
-  location          = var.location
-  node_locations    = var.node_locations
+  location       = var.location
+  node_locations = var.node_locations
 
-  dynamic addons_config {
+  dynamic "addons_config" {
     for_each = coalesce(
       var.http_load_balancing == null ? "" : true,
       var.horizontal_pod_autoscaling == null ? "" : true,
       var.network_policy_config == null ? "" : true,
       var.dns_cache_config == null ? "" : true,
-      var.gcp_filestore_csi_driver_config == null ? "" : true,false) ? [1] : []
+    var.gcp_filestore_csi_driver_config == null ? "" : true, false) ? [1] : []
     content {
       dynamic "http_load_balancing" {
         for_each = var.http_load_balancing != null ? [var.http_load_balancing] : []
@@ -49,12 +49,12 @@ resource "google_container_cluster" "cluster" {
 
   cluster_ipv4_cidr = var.cluster_ipv4_cidr
 
-  dynamic cluster_autoscaling {
+  dynamic "cluster_autoscaling" {
     for_each = var.cluster_autoscaling != null ? [var.cluster_autoscaling] : []
     content {
-      enabled  = cluster_autoscaling.value.enabled
-      dynamic resource_limits {
-        for_each = lookup(var.cluster_autoscaling,"resource_limits",[])
+      enabled = cluster_autoscaling.value.enabled
+      dynamic "resource_limits" {
+        for_each = lookup(var.cluster_autoscaling, "resource_limits", [])
         content {
           resource_type = resource_limits.value.resource_type
           minimum       = resource_limits.value.minimum
@@ -67,14 +67,14 @@ resource "google_container_cluster" "cluster" {
   default_max_pods_per_node = var.default_max_pods_per_node
   enable_shielded_nodes     = var.enable_shielded_nodes
 
-  dynamic ip_allocation_policy {
+  dynamic "ip_allocation_policy" {
     for_each = var.ip_allocation_policy != null ? [var.ip_allocation_policy] : []
     content {
       cluster_ipv4_cidr_block  = ip_allocation_policy.value.cluster_ipv4_cidr_block
       services_ipv4_cidr_block = ip_allocation_policy.value.services_ipv4_cidr_block
     }
   }
-  logging_service    = var.logging_service
+  logging_service = var.logging_service
   maintenance_policy {
     daily_maintenance_window {
       start_time = "02:00"
@@ -115,13 +115,13 @@ resource "google_container_cluster" "cluster" {
     }
   }
 
-  dynamic private_cluster_config {
+  dynamic "private_cluster_config" {
     for_each = var.private_cluster_config != null ? [var.private_cluster_config] : []
-      content {
-        enable_private_endpoint = private_cluster_config.value.enable_private_endpoint
-        enable_private_nodes    = private_cluster_config.value.enable_private_nodes
-        master_ipv4_cidr_block  = private_cluster_config.value.master_ipv4_cidr_block
-      }
+    content {
+      enable_private_endpoint = private_cluster_config.value.enable_private_endpoint
+      enable_private_nodes    = private_cluster_config.value.enable_private_nodes
+      master_ipv4_cidr_block  = private_cluster_config.value.master_ipv4_cidr_block
+    }
   }
   node_pool {
     name               = "default-pool"

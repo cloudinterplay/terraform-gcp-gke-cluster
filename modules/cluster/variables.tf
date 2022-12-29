@@ -4,26 +4,26 @@
 # Variables related to cluster it-self
 variable "name" {
   description = "The name of the cluster, unique within the project and location."
-  type = string
+  type        = string
 }
 variable "description" {
   description = "Description of the cluster."
-  type = string
-  default = null
+  type        = string
+  default     = null
 }
 variable "project" {
   description = "(Optional) The ID of the project in which the resource belongs."
-  type = string
+  type        = string
 }
 variable "location" {
   description = "The location (region or zone) in which the cluster master will be created, as well as the default node location."
-  type = string
-  default = null
+  type        = string
+  default     = null
 }
 variable "node_locations" {
   description = "(Optional) The list of zones in which the cluster's nodes are located. "
-  type = list(string)
-  default = null
+  type        = list(string)
+  default     = null
 }
 # Structure addons_config
 # (Optional) The configuration for addons supported by GKE.
@@ -64,18 +64,18 @@ variable "gcp_filestore_csi_driver_config" {
 }
 variable "cluster_ipv4_cidr" {
   description = "(Optional) The IP address range of the Kubernetes pods in this cluster in CIDR notation (e.g. 10.96.0.0/14)."
-  type = string
-  default = null
+  type        = string
+  default     = null
 }
 variable "cluster_autoscaling" {
   description = "(Optional) Per-cluster configuration of Node Auto-Provisioning with Cluster Autoscaler to automatically adjust the size of the cluster and create/delete node pools based on the current needs of the cluster's workload."
   type = object({
-    enabled       = bool
+    enabled = bool
     resource_limits = optional(list(object({
       resource_type = string
-      minimum = number
-      maximum = number
-    })),[])
+      minimum       = number
+      maximum       = number
+    })), [])
   })
   default = null
 }
@@ -124,30 +124,30 @@ variable "monitoring_service" {
 }
 variable "network" {
   description = "(Optional) The name or self_link of the Google Compute Engine network to which the cluster is connected."
-  type = string
+  type        = string
 }
 variable "network_policy" {
   description = "(Optional) Configuration options for the NetworkPolicy feature. "
   type = object({
-    enabled = bool
+    enabled  = bool
     provider = string
   })
   default = null
 }
 variable "subnetwork" {
   description = "(Optional) The name or self_link of the Google Compute Engine subnetwork in which the cluster's instances are launched."
-  type = string
+  type        = string
 }
 variable "vertical_pod_autoscaling" {
   description = "Vertical Pod Autoscaling automatically adjusts the resources of pods controlled by it"
-  type        = object({
+  type = object({
     enable = bool
   })
   default = null
 }
 variable "binary_authorization" {
   description = "Configuration options for the Binary Authorization feature."
-  type        = object({
+  type = object({
     evaluation_mode = string
   })
   default = null
@@ -163,12 +163,12 @@ variable "private_cluster_config" {
 }
 variable "remove_default_node_pool" {
   description = "(Optional) If true, deletes the default node pool upon cluster creation."
-  type    = bool
-  default = false
+  type        = bool
+  default     = false
 }
 variable "workload_metadata_config" {
   description = "(Optional) Metadata configuration to expose to workloads on the node pool."
-  type        = object({
+  type = object({
     mode = string
   })
   default = null
@@ -215,22 +215,22 @@ variable "node_pools_oauth_scopes" {
 }
 variable "node_pools" {
   description = "List of maps containing node pools"
-  type        = list(object({
-    name = string
+  type = list(object({
+    name         = string
     machine_type = string
-    disk_size_gb = optional(string,"10")
+    disk_size_gb = optional(string, "10")
     autoscaling = optional(object({
-      min_count = optional(number,1)
-      max_count = optional(number,2)
-      location_policy = optional(string,"BALANCED")
-      total_min_count = optional(string,null)
-      total_max_count = optional(string,null)
+      min_count       = optional(number, 1)
+      max_count       = optional(number, 2)
+      location_policy = optional(string, "BALANCED")
+      total_min_count = optional(string, null)
+      total_max_count = optional(string, null)
     }))
   }))
 
   default = [
     {
-      name = "default-node-pool",
+      name         = "default-node-pool",
       machine_type = "e2-micro"
     },
   ]
