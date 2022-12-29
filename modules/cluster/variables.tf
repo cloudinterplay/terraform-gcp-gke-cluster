@@ -225,7 +225,13 @@ variable "node_pools" {
       location_policy = optional(string, "BALANCED")
       total_min_count = optional(string, null)
       total_max_count = optional(string, null)
-    }))
+    }),{})
+    initial_node_count = optional(number, null)
+    node_config = optional(object({
+      image_type      = optional(string, "COS_CONTAINERD")
+      machine_type    = optional(string, "e2-micro")
+      service_account = optional(string, null)
+    }),{})
   }))
 
   default = [

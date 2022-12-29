@@ -123,59 +123,32 @@ resource "google_container_cluster" "cluster" {
       master_ipv4_cidr_block  = private_cluster_config.value.master_ipv4_cidr_block
     }
   }
-  node_pool {
-    name               = "default-pool"
-    initial_node_count = var.initial_node_count
-
-    dynamic "autoscaling" {
-      for_each = [lookup(var.node_pools[0], "autoscaling", [])]
-      content {
-        min_node_count       = autoscaling.value.min_count
-        max_node_count       = autoscaling.value.max_count
-        location_policy      = autoscaling.value.location_policy
-        total_min_node_count = autoscaling.value.total_min_count
-        total_max_node_count = autoscaling.value.total_max_count
+  dynamic "node_pool" {
+    for_each = [var.node_pools[0]]
+    content {
+      name = node_pool.value.name
+      autoscaling {
+        min_node_count       = node_pool.value.autoscaling.min_count
+        max_node_count       = node_pool.value.autoscaling.max_count
+        location_policy      = node_pool.value.autoscaling.location_policy
+        total_min_node_count = node_pool.value.autoscaling.total_min_count
+        total_max_node_count = node_pool.value.autoscaling.total_max_count
       }
-    }
+      initial_node_count = node_pool.value.initial_node_count
+      node_config {
+        image_type   = node_pool.value.node_config.image_type
+        machine_type = node_pool.value.node_config.machine_type
 
-    node_config {
-      image_type       = lookup(var.node_pools[0], "image_type", "COS_CONTAINERD")
-      machine_type     = lookup(var.node_pools[0], "machine_type", "e2-micro")
-      min_cpu_platform = lookup(var.node_pools[0], "min_cpu_platform", "")
-      dynamic "gcfs_config" {
-        for_each = lookup(var.node_pools[0], "enable_gcfs", false) ? [true] : []
-        content {
-          enabled = gcfs_config.value
-        }
-      }
+        service_account = lookup(node_pool.value.node_config,"service_account", google_service_account.cluster_service_account.email)
 
-      dynamic "gvnic" {
-        for_each = lookup(var.node_pools[0], "enable_gvnic", false) ? [true] : []
-        content {
-          enabled = gvnic.value
-        }
+        tags = concat(
+          lookup(local.node_pools_tags, "default_values", [true, true])[0] ? [local.cluster_network_tag] : [],
+          lookup(local.node_pools_tags, "default_values", [true, true])[1] ? ["${local.cluster_network_tag}-default-pool"] : [],
+          lookup(local.node_pools_tags, "all", []),
+          lookup(local.node_pools_tags, var.node_pools[0].name, []),
+        )
       }
 
-      service_account = lookup(var.node_pools[0], "service_account", google_service_account.cluster_service_account.email)
-
-      tags = concat(
-        lookup(local.node_pools_tags, "default_values", [true, true])[0] ? [local.cluster_network_tag] : [],
-        lookup(local.node_pools_tags, "default_values", [true, true])[1] ? ["${local.cluster_network_tag}-default-pool"] : [],
-        lookup(local.node_pools_tags, "all", []),
-        lookup(local.node_pools_tags, var.node_pools[0].name, []),
-      )
-
-      dynamic "workload_metadata_config" {
-        for_each = var.workload_metadata_config != null ? [1] : []
-        content {
-          mode = each.value.mode
-        }
-      }
-
-      shielded_instance_config {
-        enable_secure_boot          = lookup(var.node_pools[0], "enable_secure_boot", false)
-        enable_integrity_monitoring = lookup(var.node_pools[0], "enable_integrity_monitoring", true)
-      }
     }
   }
   remove_default_node_pool = var.remove_default_node_pool
