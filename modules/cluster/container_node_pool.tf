@@ -19,6 +19,7 @@ resource "google_container_node_pool" "pools" {
     image_type   = each.value.node_config.image_type
     machine_type = each.value.node_config.machine_type
     disk_size_gb = each.value.node_config.disk_size_gb
+    disk_type    = each.value.node_config.disk_type
     spot         = each.value.node_config.spot
 
     service_account = each.value.node_config.service_account == null ? google_service_account.cluster_service_account.email : each.value.node_config.service_account

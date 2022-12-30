@@ -139,6 +139,7 @@ resource "google_container_cluster" "cluster" {
         image_type   = node_pool.value.node_config.image_type
         machine_type = node_pool.value.node_config.machine_type
         disk_size_gb = node_pool.value.node_config.disk_size_gb
+        disk_type    = node_pool.value.node_config.disk_type
         spot         = node_pool.value.node_config.spot
 
         service_account = lookup(node_pool.value.node_config, "service_account", google_service_account.cluster_service_account.email)
