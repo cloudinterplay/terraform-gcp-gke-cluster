@@ -138,8 +138,10 @@ resource "google_container_cluster" "cluster" {
       node_config {
         image_type   = node_pool.value.node_config.image_type
         machine_type = node_pool.value.node_config.machine_type
+        disk_size_gb = node_pool.value.node_config.disk_size_gb
+        spot         = node_pool.value.node_config.spot
 
-        service_account = lookup(node_pool.value.node_config,"service_account", google_service_account.cluster_service_account.email)
+        service_account = lookup(node_pool.value.node_config, "service_account", google_service_account.cluster_service_account.email)
 
         tags = concat(
           lookup(local.node_pools_tags, "default_values", [true, true])[0] ? [local.cluster_network_tag] : [],

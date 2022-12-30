@@ -216,28 +216,28 @@ variable "node_pools_oauth_scopes" {
 variable "node_pools" {
   description = "List of maps containing node pools"
   type = list(object({
-    name         = string
-    machine_type = string
-    disk_size_gb = optional(string, "10")
+    name = string
     autoscaling = optional(object({
       min_count       = optional(number, 1)
       max_count       = optional(number, 2)
       location_policy = optional(string, "BALANCED")
       total_min_count = optional(string, null)
       total_max_count = optional(string, null)
-    }),{})
+    }), {})
     initial_node_count = optional(number, null)
     node_config = optional(object({
       image_type      = optional(string, "COS_CONTAINERD")
       machine_type    = optional(string, "e2-micro")
       service_account = optional(string, null)
-    }),{})
+      disk_size_gb    = optional(number, 10)
+      disk_type       = optional(string, "pd-standard")
+      spot            = optional(bool, false)
+    }), {})
   }))
 
   default = [
     {
-      name         = "default-node-pool",
-      machine_type = "e2-micro"
+      name = "default-pool"
     },
   ]
 }
