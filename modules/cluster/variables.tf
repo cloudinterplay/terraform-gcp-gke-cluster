@@ -6,6 +6,8 @@ variable "cluster" {
     name = string
     # Description of the cluster.
     description = optional(string, null)
+    # (Optional) The ID of the project in which the resource belongs.
+    project = string
     # The location (region or zone) in which the cluster master will be created, as well as the default node location.
     location = string
     # Structure addons_config
@@ -33,12 +35,46 @@ variable "cluster" {
     }), null)
     # (Optional) The IP address range of the Kubernetes pods in this cluster in CIDR notation (e.g. 10.96.0.0/14).
     cluster_ipv4_cidr = optional(string, null)
+    # (Optional) Configuration for private clusters, clusters with private nodes.
+    private_cluster_config = optional(object({
+      enable_private_endpoint = bool
+      enable_private_nodes    = bool
+      master_ipv4_cidr_block  = string
+    }), null)
     # (Optional) The number of nodes to create in this cluster's default node pool.
     initial_node_count = optional(number, 1)
     # (Optional) Configuration of cluster IP allocation for VPC-native clusters.
     ip_allocation_policy = optional(object({
       cluster_ipv4_cidr_block  = string
       services_ipv4_cidr_block = string
+    }), null)
+    # The logging service that the cluster should write logs to. Available options include logging.googleapis.com, logging.googleapis.com/kubernetes (beta), and none
+    logging_service = optional(string, null)
+    # The CIDR block where HTTPS access is allowed from
+    master_authorized_networks_config = optional(object({
+      cidr_blocks = list(object({
+        cidr_block   = string
+        display_name = string
+      }))
+    }), null)
+    # The monitoring service that the cluster should write metrics to. Automatically send metrics from pods in the cluster to the Google Cloud Monitoring API. VM metrics will be collected by Google Compute Engine regardless of this setting Available options include monitoring.googleapis.com, monitoring.googleapis.com/kubernetes (beta) and none
+    monitoring_service = optional(string, null)
+    # (Optional) The name or self_link of the Google Compute Engine network to which the cluster is connected.
+    network = optional(string, null)
+    # (Optional) Configuration options for the NetworkPolicy feature.
+    network_policy = optional(object({
+      enabled  = bool
+      provider = string
+    }), null)
+    # (Optional) The name or self_link of the Google Compute Engine subnetwork in which the cluster's instances are launched.
+    subnetwork = optional(string, null)
+    # Vertical Pod Autoscaling automatically adjusts the resources of pods controlled by it
+    vertical_pod_autoscaling = optional(object({
+      enable = bool
+    }), null)
+    # Configuration options for the Binary Authorization feature.
+    binary_authorization = optional(object({
+      evaluation_mode = string
     }), null)
     # (Optional) Parameters used in creating the node pool.
     node_config = optional(object({
@@ -57,75 +93,33 @@ variable "cluster" {
     remove_default_node_pool = optional(bool, false)
   })
 }
-variable "project" {
-  description = "(Optional) The ID of the project in which the resource belongs."
-  type        = string
-}
-variable "logging_service" {
-  description = "The logging service that the cluster should write logs to. Available options include logging.googleapis.com, logging.googleapis.com/kubernetes (beta), and none"
-  type        = string
-  default     = null
-}
-variable "master_authorized_networks_config" {
-  description = "The CIDR block where HTTPS access is allowed from"
-  type = object({
-    cidr_blocks = list(object({
-      cidr_block   = string
-      display_name = string
-    }))
-  })
-  default = null
-}
-variable "monitoring_service" {
-  description = "The monitoring service that the cluster should write metrics to. Automatically send metrics from pods in the cluster to the Google Cloud Monitoring API. VM metrics will be collected by Google Compute Engine regardless of this setting Available options include monitoring.googleapis.com, monitoring.googleapis.com/kubernetes (beta) and none"
-  type        = string
-  default     = null
-}
-variable "network" {
-  description = "(Optional) The name or self_link of the Google Compute Engine network to which the cluster is connected."
-  type        = string
-}
-variable "network_policy" {
-  description = "(Optional) Configuration options for the NetworkPolicy feature. "
-  type = object({
-    enabled  = bool
-    provider = string
-  })
-  default = null
-}
-variable "subnetwork" {
-  description = "(Optional) The name or self_link of the Google Compute Engine subnetwork in which the cluster's instances are launched."
-  type        = string
-}
-variable "vertical_pod_autoscaling" {
-  description = "Vertical Pod Autoscaling automatically adjusts the resources of pods controlled by it"
-  type = object({
-    enable = bool
-  })
-  default = null
-}
-variable "binary_authorization" {
-  description = "Configuration options for the Binary Authorization feature."
-  type = object({
-    evaluation_mode = string
-  })
-  default = null
-}
-variable "private_cluster_config" {
-  description = "(Optional) Configuration for private clusters, clusters with private nodes."
-  type = object({
-    enable_private_endpoint = bool
-    enable_private_nodes    = bool
-    master_ipv4_cidr_block  = string
-  })
-  default = null
-}
-variable "workload_metadata_config" {
-  description = "(Optional) Metadata configuration to expose to workloads on the node pool."
-  type = object({
-    mode = string
-  })
-  default = null
+variable "node_pools" {
+  description = "List of maps containing node pools"
+  type = list(object({
+    name = string
+    autoscaling = optional(object({
+      min_count       = optional(number, 1)
+      max_count       = optional(number, 2)
+      location_policy = optional(string, "BALANCED")
+      total_min_count = optional(string, null)
+      total_max_count = optional(string, null)
+    }), {})
+    initial_node_count = optional(number, null)
+    node_config = optional(object({
+      image_type      = optional(string, "COS_CONTAINERD")
+      machine_type    = optional(string, "e2-micro")
+      service_account = optional(string, null)
+      disk_size_gb    = optional(number, 10)
+      disk_type       = optional(string, "pd-standard")
+      spot            = optional(bool, false)
+    }), {})
+  }))
+
+  default = [
+    {
+      name = "default-pool"
+    },
+  ]
 }
 variable "node_pools_labels" {
   type        = map(map(string))
@@ -166,32 +160,4 @@ variable "node_pools_oauth_scopes" {
     all               = ["https://www.googleapis.com/auth/cloud-platform"]
     default-node-pool = []
   }
-}
-variable "node_pools" {
-  description = "List of maps containing node pools"
-  type = list(object({
-    name = string
-    autoscaling = optional(object({
-      min_count       = optional(number, 1)
-      max_count       = optional(number, 2)
-      location_policy = optional(string, "BALANCED")
-      total_min_count = optional(string, null)
-      total_max_count = optional(string, null)
-    }), {})
-    initial_node_count = optional(number, null)
-    node_config = optional(object({
-      image_type      = optional(string, "COS_CONTAINERD")
-      machine_type    = optional(string, "e2-micro")
-      service_account = optional(string, null)
-      disk_size_gb    = optional(number, 10)
-      disk_type       = optional(string, "pd-standard")
-      spot            = optional(bool, false)
-    }), {})
-  }))
-
-  default = [
-    {
-      name = "default-pool"
-    },
-  ]
 }

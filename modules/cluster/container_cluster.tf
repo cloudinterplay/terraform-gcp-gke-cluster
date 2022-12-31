@@ -1,7 +1,7 @@
 resource "google_container_cluster" "cluster" {
   name        = var.cluster.name
   description = var.cluster.description
-  project     = var.project
+  project     = var.cluster.project
   location    = var.cluster.location
 
   dynamic "addons_config" {
@@ -10,7 +10,8 @@ resource "google_container_cluster" "cluster" {
       var.cluster.addons_config.horizontal_pod_autoscaling == null ? "" : true,
       var.cluster.addons_config.network_policy_config == null ? "" : true,
       var.cluster.addons_config.dns_cache_config == null ? "" : true,
-      var.cluster.addons_config.gcp_filestore_csi_driver_config == null ? "" : true, false) ? [var.cluster.addons_config] : []
+      var.cluster.addons_config.gcp_filestore_csi_driver_config == null ? "" : true, false
+    ) ? [var.cluster.addons_config] : []
     content {
       dynamic "http_load_balancing" {
         for_each = addons_config.value.http_load_balancing != null ? [addons_config.value.http_load_balancing] : []
@@ -53,14 +54,14 @@ resource "google_container_cluster" "cluster" {
       services_ipv4_cidr_block = ip_allocation_policy.value.services_ipv4_cidr_block
     }
   }
-  logging_service = var.logging_service
+  logging_service = var.cluster.logging_service
   maintenance_policy {
     daily_maintenance_window {
       start_time = "02:00"
     }
   }
   dynamic "master_authorized_networks_config" {
-    for_each = var.master_authorized_networks_config != null ? [1] : []
+    for_each = var.cluster.master_authorized_networks_config != null ? [var.cluster.master_authorized_networks_config] : []
     content {
       dynamic "cidr_blocks" {
         for_each = lookup(master_authorized_networks_config.value, "cidr_blocks", [])
@@ -71,31 +72,30 @@ resource "google_container_cluster" "cluster" {
       }
     }
   }
-  monitoring_service = var.monitoring_service
-  network            = var.network
+  monitoring_service = var.cluster.monitoring_service
+  network            = var.cluster.network
   dynamic "network_policy" {
-    for_each = var.network_policy != null ? [var.network_policy] : []
+    for_each = var.cluster.network_policy != null ? [var.cluster.network_policy] : []
     content {
       enabled  = network_policy.value.enabled
       provider = network_policy.value.provider
     }
   }
-  subnetwork = var.subnetwork
+  subnetwork = var.cluster.subnetwork
   dynamic "vertical_pod_autoscaling" {
-    for_each = var.vertical_pod_autoscaling != null ? [var.vertical_pod_autoscaling] : []
+    for_each = var.cluster.vertical_pod_autoscaling != null ? [var.cluster.vertical_pod_autoscaling] : []
     content {
       enabled = vertical_pod_autoscaling.value.enabled
     }
   }
   dynamic "binary_authorization" {
-    for_each = var.binary_authorization != null ? [var.binary_authorization] : []
+    for_each = var.cluster.binary_authorization != null ? [var.cluster.binary_authorization] : []
     content {
       evaluation_mode = binary_authorization.value.evaluation_mode
     }
   }
-
   dynamic "private_cluster_config" {
-    for_each = var.private_cluster_config != null ? [var.private_cluster_config] : []
+    for_each = var.cluster.private_cluster_config != null ? [var.cluster.private_cluster_config] : []
     content {
       enable_private_endpoint = private_cluster_config.value.enable_private_endpoint
       enable_private_nodes    = private_cluster_config.value.enable_private_nodes
@@ -122,6 +122,6 @@ resource "google_container_cluster" "cluster" {
   }
   remove_default_node_pool = var.cluster.remove_default_node_pool
   workload_identity_config {
-    workload_pool = "${var.project}.svc.id.goog"
+    workload_pool = "${var.cluster.project}.svc.id.goog"
   }
 }
