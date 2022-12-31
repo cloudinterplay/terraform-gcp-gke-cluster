@@ -2,28 +2,33 @@
 # For example cluster{{ some variable}}, means variable for google_container_cluster
 
 # Variables related to cluster it-self
-variable "name" {
-  description = "The name of the cluster, unique within the project and location."
-  type        = string
-}
-variable "description" {
-  description = "Description of the cluster."
-  type        = string
-  default     = null
+variable "cluster" {
+  description = "Cluster parameters"
+  type = object({
+    # The name of the cluster, unique within the project and location.
+    name = string
+    # Description of the cluster.
+    description        = optional(string, null)
+    # The location (region or zone) in which the cluster master will be created, as well as the default node location.
+    location           = string
+    # (Optional) The number of nodes to create in this cluster's default node pool.
+    initial_node_count = optional(number, 1)
+    # (Optional) Parameters used in creating the node pool.
+    node_config = optional(object({
+      enable          = optional(bool, false)
+      image_type      = optional(string, "COS_CONTAINERD")
+      machine_type    = optional(string, "e2-micro")
+      service_account = optional(string, null)
+      disk_size_gb    = optional(number, 10)
+      disk_type       = optional(string, "pd-standard")
+      spot            = optional(bool, false)
+    }), null)
+    remove_default_node_pool = optional(bool, false)
+  })
 }
 variable "project" {
   description = "(Optional) The ID of the project in which the resource belongs."
   type        = string
-}
-variable "location" {
-  description = "The location (region or zone) in which the cluster master will be created, as well as the default node location."
-  type        = string
-  default     = null
-}
-variable "node_locations" {
-  description = "(Optional) The list of zones in which the cluster's nodes are located. "
-  type        = list(string)
-  default     = null
 }
 # Structure addons_config
 # (Optional) The configuration for addons supported by GKE.
@@ -87,11 +92,6 @@ variable "default_max_pods_per_node" {
 variable "enable_shielded_nodes" {
   description = "Enable Shielded Nodes features on all nodes in this cluster"
   type        = bool
-  default     = null
-}
-variable "initial_node_count" {
-  description = "(Optional) The number of nodes to create in this cluster's default node pool."
-  type        = number
   default     = null
 }
 variable "ip_allocation_policy" {
@@ -160,11 +160,6 @@ variable "private_cluster_config" {
     master_ipv4_cidr_block  = string
   })
   default = null
-}
-variable "remove_default_node_pool" {
-  description = "(Optional) If true, deletes the default node pool upon cluster creation."
-  type        = bool
-  default     = false
 }
 variable "workload_metadata_config" {
   description = "(Optional) Metadata configuration to expose to workloads on the node pool."

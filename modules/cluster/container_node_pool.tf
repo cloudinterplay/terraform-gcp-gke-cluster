@@ -2,7 +2,7 @@ resource "google_container_node_pool" "pools" {
   depends_on = [
     google_container_cluster.cluster
   ]
-  for_each = { for np in var.node_pools : np.name => np if np.name != "default-pool" }
+  for_each = { for np in var.node_pools : np.name => np }
   cluster  = google_container_cluster.cluster.name
   location = google_container_cluster.cluster.location
   name     = each.value.name

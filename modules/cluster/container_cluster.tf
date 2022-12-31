@@ -1,10 +1,8 @@
 resource "google_container_cluster" "cluster" {
-  name        = var.name
-  description = var.description
+  name        = var.cluster.name
+  description = var.cluster.description
   project     = var.project
-
-  location       = var.location
-  node_locations = var.node_locations
+  location    = var.cluster.location
 
   dynamic "addons_config" {
     for_each = coalesce(
@@ -123,38 +121,19 @@ resource "google_container_cluster" "cluster" {
       master_ipv4_cidr_block  = private_cluster_config.value.master_ipv4_cidr_block
     }
   }
-  dynamic "node_pool" {
-    for_each = [var.node_pools[0]]
+  initial_node_count = var.cluster.initial_node_count
+  dynamic "node_config" {
+    for_each = var.cluster.node_config.enable ? [var.cluster.node_config] : []
     content {
-      name = node_pool.value.name
-      autoscaling {
-        min_node_count       = node_pool.value.autoscaling.min_count
-        max_node_count       = node_pool.value.autoscaling.max_count
-        location_policy      = node_pool.value.autoscaling.location_policy
-        total_min_node_count = node_pool.value.autoscaling.total_min_count
-        total_max_node_count = node_pool.value.autoscaling.total_max_count
-      }
-      initial_node_count = node_pool.value.initial_node_count
-      node_config {
-        image_type   = node_pool.value.node_config.image_type
-        machine_type = node_pool.value.node_config.machine_type
-        disk_size_gb = node_pool.value.node_config.disk_size_gb
-        disk_type    = node_pool.value.node_config.disk_type
-        spot         = node_pool.value.node_config.spot
-
-        service_account = lookup(node_pool.value.node_config, "service_account", google_service_account.cluster_service_account.email)
-
-        tags = concat(
-          lookup(local.node_pools_tags, "default_values", [true, true])[0] ? [local.cluster_network_tag] : [],
-          lookup(local.node_pools_tags, "default_values", [true, true])[1] ? ["${local.cluster_network_tag}-default-pool"] : [],
-          lookup(local.node_pools_tags, "all", []),
-          lookup(local.node_pools_tags, var.node_pools[0].name, []),
-        )
-      }
-
+      image_type      = node_config.value.image_type
+      machine_type    = node_config.value.machine_type
+      service_account = node_config.value.service_account
+      disk_size_gb    = node_config.value.disk_size_gb
+      disk_type       = node_config.value.disk_type
+      spot            = node_config.value.spot
     }
   }
-  remove_default_node_pool = var.remove_default_node_pool
+  remove_default_node_pool = var.cluster.remove_default_node_pool
   workload_identity_config {
     workload_pool = "${var.project}.svc.id.goog"
   }
