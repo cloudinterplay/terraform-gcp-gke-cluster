@@ -6,67 +6,48 @@ resource "google_container_cluster" "cluster" {
 
   dynamic "addons_config" {
     for_each = coalesce(
-      var.http_load_balancing == null ? "" : true,
-      var.horizontal_pod_autoscaling == null ? "" : true,
-      var.network_policy_config == null ? "" : true,
-      var.dns_cache_config == null ? "" : true,
-    var.gcp_filestore_csi_driver_config == null ? "" : true, false) ? [1] : []
+      var.cluster.addons_config.http_load_balancing == null ? "" : true,
+      var.cluster.addons_config.horizontal_pod_autoscaling == null ? "" : true,
+      var.cluster.addons_config.network_policy_config == null ? "" : true,
+      var.cluster.addons_config.dns_cache_config == null ? "" : true,
+      var.cluster.addons_config.gcp_filestore_csi_driver_config == null ? "" : true, false) ? [var.cluster.addons_config] : []
     content {
       dynamic "http_load_balancing" {
-        for_each = var.http_load_balancing != null ? [var.http_load_balancing] : []
+        for_each = addons_config.value.http_load_balancing != null ? [addons_config.value.http_load_balancing] : []
         content {
           disabled = http_load_balancing.value.disabled
         }
       }
       dynamic "horizontal_pod_autoscaling" {
-        for_each = var.horizontal_pod_autoscaling != null ? [var.horizontal_pod_autoscaling] : []
+        for_each = addons_config.value.horizontal_pod_autoscaling != null ? [addons_config.value.horizontal_pod_autoscaling] : []
         content {
           disabled = horizontal_pod_autoscaling.value.disabled
         }
       }
       dynamic "network_policy_config" {
-        for_each = var.network_policy_config != null ? [var.network_policy_config] : []
+        for_each = addons_config.value.network_policy_config != null ? [addons_config.value.network_policy_config] : []
         content {
           disabled = network_policy_config.value.disabled
         }
       }
       dynamic "dns_cache_config" {
-        for_each = var.dns_cache_config != null ? [var.dns_cache_config] : []
+        for_each = addons_config.value.dns_cache_config != null ? [addons_config.value.dns_cache_config] : []
         content {
           enabled = dns_cache_config.value.enabled
         }
       }
       dynamic "gcp_filestore_csi_driver_config" {
-        for_each = var.gcp_filestore_csi_driver_config != null ? [var.gcp_filestore_csi_driver_config] : []
+        for_each = addons_config.value.gcp_filestore_csi_driver_config != null ? [addons_config.value.gcp_filestore_csi_driver_config] : []
         content {
           enabled = gcp_filestore_csi_driver_config.value.enabled
         }
       }
     }
   }
-
-  cluster_ipv4_cidr = var.cluster_ipv4_cidr
-
-  dynamic "cluster_autoscaling" {
-    for_each = var.cluster_autoscaling != null ? [var.cluster_autoscaling] : []
-    content {
-      enabled = cluster_autoscaling.value.enabled
-      dynamic "resource_limits" {
-        for_each = lookup(var.cluster_autoscaling, "resource_limits", [])
-        content {
-          resource_type = resource_limits.value.resource_type
-          minimum       = resource_limits.value.minimum
-          maximum       = resource_limits.value.maximum
-        }
-      }
-    }
-  }
-
-  default_max_pods_per_node = var.default_max_pods_per_node
-  enable_shielded_nodes     = var.enable_shielded_nodes
+  cluster_ipv4_cidr = var.cluster.cluster_ipv4_cidr
 
   dynamic "ip_allocation_policy" {
-    for_each = var.ip_allocation_policy != null ? [var.ip_allocation_policy] : []
+    for_each = var.cluster.ip_allocation_policy != null ? [var.cluster.ip_allocation_policy] : []
     content {
       cluster_ipv4_cidr_block  = ip_allocation_policy.value.cluster_ipv4_cidr_block
       services_ipv4_cidr_block = ip_allocation_policy.value.services_ipv4_cidr_block
@@ -131,6 +112,12 @@ resource "google_container_cluster" "cluster" {
       disk_size_gb    = node_config.value.disk_size_gb
       disk_type       = node_config.value.disk_type
       spot            = node_config.value.spot
+    }
+  }
+  dynamic "release_channel" {
+    for_each = var.cluster.release_channel.enable ? [var.cluster.release_channel] : []
+    content {
+      channel = release_channel.value.channel
     }
   }
   remove_default_node_pool = var.cluster.remove_default_node_pool

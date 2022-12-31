@@ -1,6 +1,3 @@
-# Each resource variable has prefix which indicate the resource it's related to.
-# For example cluster{{ some variable}}, means variable for google_container_cluster
-
 # Variables related to cluster it-self
 variable "cluster" {
   description = "Cluster parameters"
@@ -8,11 +5,41 @@ variable "cluster" {
     # The name of the cluster, unique within the project and location.
     name = string
     # Description of the cluster.
-    description        = optional(string, null)
+    description = optional(string, null)
     # The location (region or zone) in which the cluster master will be created, as well as the default node location.
-    location           = string
+    location = string
+    # Structure addons_config
+    addons_config = optional(object({
+      # (Optional) The status of the HTTP (L7) load balancing controller addon, which makes it easy to set up HTTP load balancers for services in a cluster.
+      http_load_balancing = optional(object({
+        disabled = bool
+      }), null)
+      # (Optional) The status of the Horizontal Pod Autoscaling addon, which increases or decreases the number of replica pods a replication controller has based on the resource usage of the existing pods.
+      horizontal_pod_autoscaling = optional(object({
+        disabled = bool
+      }), null)
+      # (Optional) Whether we should enable the network policy addon for the master.
+      network_policy_config = optional(object({
+        disabled = bool
+      }), null)
+      # (Optional). The status of the NodeLocal DNSCache addon. It is disabled by default.
+      dns_cache_config = optional(object({
+        enabled = bool
+      }), null)
+      # (Optional) The status of the Filestore CSI driver addon, which allows the usage of filestore instance as volumes.
+      gcp_filestore_csi_driver_config = optional(object({
+        enabled = bool
+      }), null)
+    }), null)
+    # (Optional) The IP address range of the Kubernetes pods in this cluster in CIDR notation (e.g. 10.96.0.0/14).
+    cluster_ipv4_cidr = optional(string, null)
     # (Optional) The number of nodes to create in this cluster's default node pool.
     initial_node_count = optional(number, 1)
+    # (Optional) Configuration of cluster IP allocation for VPC-native clusters.
+    ip_allocation_policy = optional(object({
+      cluster_ipv4_cidr_block  = string
+      services_ipv4_cidr_block = string
+    }), null)
     # (Optional) Parameters used in creating the node pool.
     node_config = optional(object({
       enable          = optional(bool, false)
@@ -23,84 +50,16 @@ variable "cluster" {
       disk_type       = optional(string, "pd-standard")
       spot            = optional(bool, false)
     }), null)
+    release_channel = optional(object({
+      enable  = optional(bool, false)
+      channel = optional(string, "REGULAR")
+    }), null)
     remove_default_node_pool = optional(bool, false)
   })
 }
 variable "project" {
   description = "(Optional) The ID of the project in which the resource belongs."
   type        = string
-}
-# Structure addons_config
-# (Optional) The configuration for addons supported by GKE.
-variable "http_load_balancing" {
-  description = "(Optional) The status of the HTTP (L7) load balancing controller addon, which makes it easy to set up HTTP load balancers for services in a cluster."
-  type = object({
-    disabled = bool
-  })
-  default = null
-}
-variable "horizontal_pod_autoscaling" {
-  description = "(Optional) The status of the Horizontal Pod Autoscaling addon, which increases or decreases the number of replica pods a replication controller has based on the resource usage of the existing pods."
-  type = object({
-    disabled = bool
-  })
-  default = null
-}
-variable "network_policy_config" {
-  description = "(Optional) Whether we should enable the network policy addon for the master."
-  type = object({
-    disabled = bool
-  })
-  default = null
-}
-variable "dns_cache_config" {
-  description = "(Optional). The status of the NodeLocal DNSCache addon. It is disabled by default."
-  type = object({
-    enabled = bool
-  })
-  default = null
-}
-variable "gcp_filestore_csi_driver_config" {
-  description = "(Optional) The status of the Filestore CSI driver addon, which allows the usage of filestore instance as volumes."
-  type = object({
-    enabled = bool
-  })
-  default = null
-}
-variable "cluster_ipv4_cidr" {
-  description = "(Optional) The IP address range of the Kubernetes pods in this cluster in CIDR notation (e.g. 10.96.0.0/14)."
-  type        = string
-  default     = null
-}
-variable "cluster_autoscaling" {
-  description = "(Optional) Per-cluster configuration of Node Auto-Provisioning with Cluster Autoscaler to automatically adjust the size of the cluster and create/delete node pools based on the current needs of the cluster's workload."
-  type = object({
-    enabled = bool
-    resource_limits = optional(list(object({
-      resource_type = string
-      minimum       = number
-      maximum       = number
-    })), [])
-  })
-  default = null
-}
-variable "default_max_pods_per_node" {
-  description = "The maximum number of pods to schedule per node"
-  type        = number
-  default     = null
-}
-variable "enable_shielded_nodes" {
-  description = "Enable Shielded Nodes features on all nodes in this cluster"
-  type        = bool
-  default     = null
-}
-variable "ip_allocation_policy" {
-  description = "(Optional) Configuration of cluster IP allocation for VPC-native clusters."
-  type = object({
-    cluster_ipv4_cidr_block  = string
-    services_ipv4_cidr_block = string
-  })
-  default = null
 }
 variable "logging_service" {
   description = "The logging service that the cluster should write logs to. Available options include logging.googleapis.com, logging.googleapis.com/kubernetes (beta), and none"
