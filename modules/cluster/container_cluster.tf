@@ -52,9 +52,15 @@ resource "google_container_cluster" "cluster" {
     content {
       cluster_ipv4_cidr_block  = ip_allocation_policy.value.cluster_ipv4_cidr_block
       services_ipv4_cidr_block = ip_allocation_policy.value.services_ipv4_cidr_block
+      stack_type               = ip_allocation_policy.value.stack_type
     }
   }
   logging_service = var.cluster.logging_service
+  monitoring_config {
+    managed_prometheus {
+      enabled = false
+    }
+  }
   maintenance_policy {
     daily_maintenance_window {
       start_time = "02:00"
@@ -121,6 +127,8 @@ resource "google_container_cluster" "cluster" {
     }
   }
   remove_default_node_pool = var.cluster.remove_default_node_pool
+  enable_l4_ilb_subsetting = true
+  datapath_provider = "ADVANCED_DATAPATH"
   workload_identity_config {
     workload_pool = "${var.cluster.project}.svc.id.goog"
   }

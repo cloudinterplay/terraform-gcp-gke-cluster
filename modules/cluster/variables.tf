@@ -47,6 +47,7 @@ variable "cluster" {
     ip_allocation_policy = optional(object({
       cluster_ipv4_cidr_block  = string
       services_ipv4_cidr_block = string
+      stack_type               = optional(string,null)
     }), null)
     # The logging service that the cluster should write logs to. Available options include logging.googleapis.com, logging.googleapis.com/kubernetes (beta), and none
     logging_service = optional(string, null)
